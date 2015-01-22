@@ -1,0 +1,12 @@
+;=======================================================  ;
+;  Mod List Table Structures & Memory map                 ;
+;=======================================================  ; 
+ModListStruct:                                            ;
+ModID                         rb    8                     ;
+NumberOfFunctions             rd    1                     ;
+AbsoluteAddressInMemory       rd    1                     ;
+SizeModuleInBytes             rd    1                     ;
+OffsetModLoadCode             rd    1                     ;
+OffsetModUnLoadCode           rd    1                     ;
+OffsetServiceTable            rd    1                     ;
+ModListSpace                  rb    32*64                 ;

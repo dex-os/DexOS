@@ -1,0 +1,425 @@
+;=================================================;
+;   ____                    _____   ____     2005 ;
+;  /\  _`\                 /\  __`\/\  _`\        ;
+;  \ \ \/\ \     __   __  _\ \ \/\ \ \,\L\_\      ;
+;   \ \ \ \ \  /'__`\/\ \/'\\ \ \ \ \/_\__ \      ;
+;    \ \ \_\ \/\  __/\/>  </ \ \ \_\ \/\ \L\ \    ;
+;     \ \____/\ \____\/\_/\_\ \ \_____\ `\____\   ;
+;      \/___/  \/____/\//\/_/  \/_____/\/_____/   ;
+;                                                 ;
+;                DexOS  Programing                ;
+;                  By Solidus117                  ;
+;        (Updated for ver 6 - by Dex 2012)        ;
+;=================================================;
+
+Contents:
+
+     1.0     Introduction    
+     1.1     Pre-requisites    
+     1.2     Resources	  
+    
+     2.0     Overview	 
+     2.1     Generalised Application Structure	  
+     2.2     Full Source Listing    
+     2.3     Source Code Breakdown    
+     2.4     Conclusion    
+	
+     3.0     Appendix A:     Updates and Change Log
+     3.1     Appendix B:     Author Information
+
+     4.0     Index    
+
+
+Chapter 1.0 - Introduction
+===========================
+
+DexOS (VER 6) is a 32-bit protected mode, single-tasking operating system
+implemented entirely in x86 assembly language.
+This operating system shares similar traits to Microsoft's Disk Operating
+System (MS-DOS), and includes access to VESA compliant graphics adaptors.
+This operating system is currently experimental (although relatively stable).
+As such, any damage incurred through using this OS is through your own use.
+
+Chapter 1.1 - Pre-requisites
+============================
+
+It is assumed that you have a sound knowledge of assembly language, and
+that you are comfor   le using Flat Assembler. All code in this document
+is in FASM.
+
+The software requirements of this guide is as follows:
+
+  1.  The DexOS on a floppy diskette or Cd, Usb fob.
+  2.  'Dex.inc'
+  3.  Flat Assembler (See Resources)
+  4.  A host operating system such as Microsoft Windows or Linux
+    
+Chapter 1.2 - Resources
+=======================
+
+The following websites contain auxiliary information about DexOS and Flat
+Assembler.    
+    
+     DexOS:
+	 http://www.dex-os.com		    The home of DexOS
+	 http://dex.7.forumer.com	    The DexOS Message Board/Forum
+	    
+     Flat Assembler:	
+	 http://flatassembler.net	    The home of FASM by T. Grysztar
+	 http://board.flatassmebler.net     The FASM Message Board/Forum
+
+
+Chapter 2.0 - Overview
+======================
+
+DexOS is a single-tasking operating system. At the present time, there are
+not many system services to worry about, so this guide
+shall take you through the basics of implementing a simple application that
+will fulfil the following requirements:
+
+       Be able to read and write files located on the current drive
+       (exceptCD-ROM media);
+       Be able to gather input from the user;
+       Be able to write data to the terminal (80x25 character text mode).
+	
+Now that the introductions have concluded, lets move onto the basics.	 
+    
+Chapter 2.1 - Generalised Application Structure
+===============================================
+
+The general structure of an application consists of an application header,
+then generally initialised data, code, uninitialised data, then finally
+the required system code inclusions. Below is a general representation
+
+(do not assemble):
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Header
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+use32
+    org  0x1A00000
+    jmp  initialise
+    db	 'DEX6'
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Init. Data
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    data1  db  'Hi!',0
+    data2  db  10,13,0
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Code
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+initialise:
+    <insert code>
+    ret
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Uninit. Data
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    data3   db	?
+    data4:  times 32 db ?
+	     
+include "Dex.inc"
+
+	     
+First the header
+================
+
+We use 32bit code for applications, therefore we instruct the assembler to
+use 32bit code. We organise the binary to load into memory at 0x1A00000 (26MB), as
+the operating system is loaded under this value. The next instruction
+defines the point that the actual code section starts.
+The final element is a 4-byte string that indicates that this binary is
+in fact a DexOS binary and needs to ver 6 of the kernel32 to run on.
+
+The Initialised data section. Although not entirely necessary, it is good
+practise to put initialised data here. Executing data is not nice. Notice
+that the strings data1 and data2 have 0's appended. This is the string
+delimiter used for writing strings to the terminal output, but more on
+this later.
+Code. All application code should be situated here.
+The <insert code> tag will be covered later. 'ret' indicates returning
+to the OS Shell.
+
+Uninitialised data is the last section and generally is so because this
+is where you will load files from disk, put strings and so forth. The
+inclusion of 'Dex.inc' is necessary. We will come to this shortly.
+
+As a side note, DexOS binaries use a flat execu   le model, so do not
+include directives that format output binaries to MZ, PE, COFF or
+ELF executables. But the final binary must have a '.dex' or '.gex' extension for
+it be recognised as a DexOS binary.
+
+
+Chapter 2.2 - Full Source Listing
+=================================
+
+Below is a listing of the application we will dissect. Cut and Paste
+where it  indicates, assemble, test it, then go and read the breakdown.
+Since thisapplication opens files, you will require something to read.
+Any ASCII text file is fine.
+
+It assembles as indicated:    
+       "fasm my_app.asm my_app.dex"    
+	
+Source:
+=======
+;------------------------------ Cut Here ---------------------------------;
+    
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;: my_app.asm    -   Learning Application
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+macro newline
+{
+    mov  esi,newline_string
+    call [PrintString_0]
+}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Application Header.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+use32
+
+    org  0x1A00000
+    jmp  initialise
+    db	 'DEX6'
+    
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Initialised Data.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+name_string	db	'Filename: ',0
+wait_string	db	'Press any key to continue',0
+string_1	db	'You have ',0
+string_2	db	' MB of Total Memory!',0
+string_3	db	' MB of Extended Memory!',0
+string_4	db	' KB of Conventional Memory!',0
+newline_string	db	10,13,0
+buffer_offset	dd	0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Code Section.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+initialise:
+    mov   ax,0x18		     ; Setup the segment registers
+    mov   ds,ax
+    mov   es,ax
+    mov   edi,Functions 	     ; This is the interrupt we use
+    mov   ax,0x0A00		     ; to load 'DexFunction.inc' call-
+    int   0x50			     ; table of functions.
+
+getuserinput:
+    mov  esi,name_string	     ; Get the address of the string
+    call [PrintString_0]	     ; then call the system functions
+    call [GetUserInput] 	     ; Get input from the user
+    newline			     ; use the newline macro
+    
+    xor  ebx,ebx
+@@:
+    cmp  ebx,4095		     ; This section initialises the
+    je	 openfile		     ; data buffer to 0.
+    mov  [filebuffer+ebx],dword 0    ; That way we can use a print
+    inc  ebx			     ; string call.
+    jmp  @b
+    
+openfile:			     ; edi should point to name of file
+    mov  edx,filebuffer 	     ; See the relevant breakdown
+    call [ReadFileFat]
+    mov  eax,18
+    call [SetDelay]
+    jc	 quit_app
+    
+dumpbuffer:
+    mov  esi,filebuffer 	     ; See relevant breakdown
+    call [PrintString_0]
+newline
+    mov  esi,wait_string
+    call [PrintString_0]
+    call [WaitForKeyPress]
+    newline
+    newline
+    
+getmemory:
+    call [ExtendedMemory]
+    shr eax,10			    ; Convert to megabytes
+    mov  [extend_mem],eax	    ; Then put in memory
+    call [ConvenMemorySize]
+
+    
+printconv_memory:
+    mov  esi,string_1
+    call [PrintString_0]
+    call [WriteHex32]		    ; Eax already has the conv.
+    mov  esi,string_4
+    call [PrintString_0]
+    newline
+    
+printext_memory:
+    mov  esi,string_1
+    call [PrintString_0]
+    mov  eax,[extend_mem]
+    call [WriteHex32]
+    mov  esi,string_3
+    call [PrintString_0]
+    newline
+    
+printtotal_memory:
+    mov  esi,string_1
+    call [PrintString_0]
+    mov  eax,ebx
+    call [WriteHex32]
+    mov  esi,string_2
+    call [PrintString_0]
+    newline
+    
+quit_app:
+    newline
+    mov  esi,wait_string
+    call [PrintString_0]
+    call [WaitForKeyPress]
+    ret 			; End application
+    
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Uninitialised Data.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+filebuffer:	times 4096 db ? ; 4kb Buffer
+extend_mem	dd  ?
+
+include "Dex.inc"		; Call-table include file
+    
+;------------------------------ Cut Here ---------------------------------;
+
+Chapter 2.3 - Source Code Breakdown
+===================================
+
+This is a pretty simple application. It simply does this:
+
+  1.   Gets a filename from the user;
+  2.   Reads a file of that filename into a 4 kilobyte buffer;
+  3.   Dumps the buffer to screen;
+  4.   Gets the Conventional, Extended and Total Memory and prints the
+  5.   hexadecimal values to screen.
+	   
+Now, there are a few inefficiencies and rough edges, but optimisations can
+be performed after learning. I have used address labels to label code
+stublets.
+Hopefully you are proficient in using macros, as the macro 'newline' simply
+does that, prints a newline. The application header should also look
+familiar, as this was covered previously under section 2.1.    
+     
+The 'Initialised Data' section of our application is straightforward, and is
+also discussed previously in section 2.1.
+Let's start with 'initialise'.
+
+mov   ax,0x18
+mov   ds,ax
+mov   es,ax
+    
+mov   edi,Functions
+mov   ax,0x0A00
+int   0x50
+
+Firstly, we initialise segment registers DS and ES with 18h. Then load EDI
+and ax with the function call table pointer and A00h respectively.
+This sets up the application to use the function call table, of which we use
+heavily.
+
+Next, we have to get a string from the user to use as a filename. Here we    
+immediately use the string in the next stublet, but you could alternately
+copy the string into an uninitialised data buffer, using the value of cx to
+determine the amount of elements needed for such a buffer. We also print a 0
+terminated string for prompting.
+
+mov  esi,name_string
+call [PrintString_0]
+call [GetUserInput]
+newline
+    
+As you can see, function calls are simply the case of loading the required    
+registers with required data, the calling the actual name of the function.    
+xor  ebx,ebx
+@@:
+cmp  ebx,4095
+je   openfile
+mov  [filebuffer+ebx],dword 0
+inc  ebx
+jmp  @b
+    
+This section is fairly simple, as all of the soon-to-be-used file buffer is
+zeroed. See the Flat Assembler documentation for more information about
+reserving data.
+
+mov  edx,filebuffer
+call [ReadFileFat]
+mov  ax,18
+call [SetDelay]
+jc   quit_app
+    
+'openfile' simply does that. The only point to be made is that on error,
+the carry flag is set. If this checked while the file is still reading off
+thedrive, it will jump to 'quit_app'.
+Therefore we have to add a delay before we decide what to do.
+ This is done with 'SetDelay'. See 'Dex.inc' for more information.
+
+mov  esi,filebuffer
+call [PrintString_0]
+newline
+mov  esi,wait_string
+call [PrintString_0]
+call [WaitForKeyPress]
+newline
+newline
+	    
+We have already covered these functions. Basically, it's all about loading
+registers with values, then calling the appropriate function. We'll jump to
+'quit_app'.
+
+newline
+mov  esi,wait_string
+call [PrintString_0]
+call [WaitForKeyPress]
+ret
+    
+What's to be said about 'quit_app'? Well, as soon as 'ret' is called, the    
+application will return to the CLI. So be weary about calling your own
+functions then returning from them.
+
+Chapter 2.4 - Conclusion
+========================
+
+As mentioned before, an application consists of calls to functions, then
+moving the data around, and calling more functions. Simple. This is just
+a simple application and is by no means definitive of what DexOS is
+capable of. Please investigate 'Dex.inc' for more information on
+the necessary registers for different calls.
+
+
+Chapter 3.0 - Appendix A: Updates and Change Log
+================================================
+
+	   27 / 12 / 2005 (mod for ver 6, by Dex 2012)
+	   Version 1.0 of this file.
+
+Chapter 3.1 - Appendix B: Author Information
+============================================
+
+      mail:	    starfiredev@hotmail.com
+dex forums:	    solidus117
+  homepage:	    http://mars.walagata.com/w/solidus117/main.html
+    weblog:	    http://spaces.msn.com/members/collectivecyber
+

@@ -1,0 +1,154 @@
+
+                            "BOOTPROG" BOOT SECTOR
+
+                                  DESCRIPTION
+
+  What is the "BOOTPROG" boot sector? It's a  boot  sector  for  FAT12  floppy
+diskettes both 3.5 and 5.25 inch. This  boot  sector  can  load  and  run  any
+standard MSDOS COM or EXE program placed to the root directory of the disk.
+
+                           WHAT IT MAY BE USED FOR?
+
+  Well, it may be used for loading a custom OS kernel (or kerenel loader).  It
+also may be used for simple running of  PMode  programs  that  need  Privilege
+Level 0, but user has WindowsNT with NTFS on his computer. He has no other way
+of doing that (NT doesn't allow to run such  programs,  there  is  no  anyhing
+similar to the "command prompt only" boot option in Win9x and harddisk is  not
+accessible).
+  If you're interested in how bootstrap, BIOS Int 13h and FAT12 work, you  may
+learn from the boot sector sourcecode. :)
+
+                           WHAT IT CAN'T BE USED FOR
+
+  Since the boot sector loads COM and EXE programs, it also can load  and  run
+any existing MSDOS program such as Norton Commander, for example. But I  think
+you understand that this boot sector doesn't provide  any  DOS  service...  So
+don't play a fool and don't try to perform an Int 21h  instruction  until  you
+load MSDOS. Use BIOS service instead. BIOS provides keyboard and screen I/O as
+well as DOS.
+  It can't be used for hard disks because it has support for  FAT12  only  and
+there is not much space to fitting code that works  with  HDD  partitions  and
+different FAT types (Windows9x FAT32, for example).
+
+                               HOW DOES IT WORK?
+
+  Yeah, it really works... Nothing unusual... It just looks for a program file
+name at the  root  directory  and  loads  corresponding  file  with  following
+execution. If the boot sector fails to read any other sector, it prints a very
+short message ("RE") to the screen and hangs the computer. If the boot  sector
+fails to find needed program in the root directory, it also hangs with another
+message ("NF").
+  "RE" stands for "Read Error"
+  "NF" stands for "file Not Found"
+  COM and EXE programs are executed standard way just like in  MSDOS.  Program
+stack is also setup depending on file type ("MZ" signature inside the  program
+file stands for EXE file).
+  Program file is loaded to the 60h segment by default. See  source  code  for
+details about computer memory layout.
+  NOTE: you may not format your diskette for future  storing  of  files  after
+installing the new boot sector. An original boot sector of the diskette  stays
+good for that, sice no serious information is changed.
+
+            HOW TO MAKE MY DISK BOOTABLE WITH THIS NEW BOOT SECTOR?
+
+  Nothing special. Just get any already formatted diskette. You may format  it
+either in MSDOS or Windows 9x or Windows NT. Under WinNT select FAT12 type for
+formatting.
+  You may use diskettes of any capacity and any sizes. The boot  sector  works
+the same on 3.5 and 5.25 inch disks and it doesn't care about disk  space.  It
+maybe a 720KB or 360KB disk as well as 1.44MB or 1.2MB.
+  Btw, you don't need to kill all the files on the  diskette.  You  may  don't
+delete them at all, if there is enough space for a program that will be loaded
+by the boot sector.
+  I remember how MSDOS boot sector works. :) It can't load  system  files,  if
+they are not the very first files on the disk. What the hell  MS  did  such  a
+bullshit, huh ??? My boot sector loads a program normally  regardless  of  the
+place where it starts on the disk and regardless of the chaos on the  disk  (I
+mean files on the disk may be fragmented. If you don't know what  this  means,
+read some manual where described what DOS/Windows9x DEFRAG.EXE program is).
+
+  OKay, we have got a formatted FAT12  diskette.  What's  next?  Follow  these
+commands:
+  1. Put the diskette to a floppy drive ("A:" or "B:"). Let's say to "A:".
+  2. Run the BOOTABLE.EXE utility as follows:
+       BOOTABLE BOOT12.BIN A:
+     This means read new boot sector from  the  BOOT12.BIN  file  and  put  it
+     directly to the diskette in the drive "A:".
+  3. Copy any existing COM/EXE program that doesn't use  DOS  service  to  the
+     diskette and rename it to the STARTUP.BIN file.
+  4. Reset the computer.
+  5. Enter the BIOS setup by pressing the DEL key.
+  6. Find the Advanced Setup section and choose bootstrap  order  that  starts
+     with the "A:" disk
+  7. Exit BIOS setup and the computer will reboot.
+  8. Sit and wait for your program.
+  9. If everything is OK, you see how your program works, cry  "I've  got  it!
+     Yes! Yes! Yes!" very loudly so that every neighbour can hear you. :))
+ 10. If you see either "RE" or "NF" message on the screen, your disk is faulty
+     or you have made a mistake somewhere - file named as STARTUP.BIN  doesn't
+     exest.
+     IMPORTANT NOTE: Be sure that your program is indeed named as  STARTUP.BIN
+     but not as STARTU~1.BIN which may happen under Windows. Check this by the
+     "dir" command wich shows 8.3 short DOS names as well as LFNs of Windows.
+
+  In order to load your MSDOS or Windows,  simply  choose  a  bootstrap  order
+starting with the "C:" disk, where your OS lives. If it  lives  on  any  other
+disk, choose appropriate order of bootstrap in the BIOS setup.
+
+                     OTHER UTILS AVAILABLE IN THE PACKAGE
+
+  GETBOOTF.EXE is a program that reads a boot sector  from  an  "A:"  or  "B:"
+drive and stores it to a file.
+  SETBOOTF.EXE is a program that loads a boot sector from  a  given  file  and
+writes it to an "A:" or "B:" disk. This util replaces disk boot sector  fully.
+IMPORTANT NOTE: BOOTABLE.EXE program updates only  boot  sector  code,  volume
+lable and system OEM name, but keeps hardware dependant information (number of
+tracks, size of cluster, etc.) unchanged.
+  REN_PROG.EXE is a program that provides changing of a  program  filename  to
+be load by the boot sector. This program works with boot  sector  saved  as  a
+file and don't access your floppy disk at all. You should use this util before
+actual writing of the boot sector to the diskette.
+  NOTE: you may run these programs w/o any switches and  parameters  specified
+in order to see how to launch them right way.
+
+          WHAT IS INSIDE THIS PACKAGE EXCEPT OF THE LISTED PROGRAMS?
+
+  I've put here two simple programs written in assembler. These  programs  may
+be loaded and run by the boot sector. This is just something like an  example.
+Btw, if you find any compiler which can make COM/EXE programs that don't  deal
+with DOS service functions, you may use it for making programs to be loaded by
+the boot sector.
+  The programs are: STARTUPC.COM  and  STARTUPE.EXE.  They  print  a  standard
+"Hello World!" message and hang the computer.
+
+                                  EXTRA GIFT
+
+  I just finished a version  of  the  boot  sector  for  MSDOS  FAT16  primary
+partitions. I tested the boot sector and it worked with  my  HDD  as  well  as
+FAT12 version with floppy diskettes.
+  I included some extra utils for setting the boot sector to a HDD and reading
+it from a HDD. The utils are:
+  GETBOOTH.EXE reads a boot sector from a HDD and saves to a specified file
+  SETBOOTH.EXE writes a boot sector to a HDD from a file
+  BOOTHDD.EXE  makes your HDD bootable with my cool boot sector
+NOTE 1: BOOTHDD.EXE  doesn't  change  HDD  geometry  in  a  boot  sector,  but
+        SETBOOTH.EXE updates a boot sector ENTIRELY.
+NOTE 2: Don't try to install the boot sector to  HDD  disks  in  DOS  extended
+        partition. I.e. if your HDD is split into C:, D:  and  E:  disks,  you
+        should not install the boot sector to D: and  E:  disks  because  only
+        disk C: is bootable. Hence, you should install it to disk C:.
+
+                                  CONCLUSION
+
+  I hope I give you everything you need and provide enough  information  about
+all this stuff. Btw, all the sources are included to this package, so you  can
+know a lot more from them then from this manual.
+
+                              CONTACT INFORMATION
+
+E-Mail:   alexfru@chat.ru
+Homepage: http://alexfru.chat.ru
+Mirror:   http://members.xoom.com/alexfru
+
+                                                             Alexei A. Frounze
+                                                               2nd March, 2000

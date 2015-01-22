@@ -1,0 +1,229 @@
+
+
+                        Üßßß                          Û
+                      ÜÜÛÜÜ ÜÜÜÜ    ÜÜÜÜÜ ÜÜÜ ÜÜ   ÜÜÜÛ
+                        Û       Û  Û      Û  Û  Û Û   Û
+                        Û  ÜßßßßÛ   ßßßßÜ Û  Û  Û Û   Û
+                        Û  ßÜÜÜÜÛÜ ÜÜÜÜÜß Û  Û  Û ßÜÜÜÛÜ
+
+                          flat assembler IDE for DOS
+
+
+Table of contents
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+1  Introduction
+2  System requirements
+3  Keyboard commands in editor
+4  Working with windows
+5  Editor options
+6  Configuration
+
+
+
+1  Introduction
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+The FASMD.EXE is a version of flat assembler integrated into editor
+environment capable of editing many file at once (limited only by the
+available memory) and compiling and running programs created this way
+directly from inside the IDE. The editor also uses the simple syntax
+highlighting based on the same algorithms as used by flat assembler itself.
+
+
+2  System requirements
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+The DOS IDE version of flat assembler requires an OS compatible with MS DOS
+with a DPMI server available, compliant at least to DPMI 0.9 specification.
+It also requires a color video adapter compatible with VGA.
+  The editor runs in text mode and it tries to preserve the mode that was set
+outside of it (so you can even switch a mode by writing simple program doing
+it and executing it from inside the IDE), however it won't accept text modes
+with less than 80 columns.
+
+
+3  Keyboard commands in editor
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+This section lists the all keyboard commands available when working with
+editor. Except for the keys listed as specific ones, they are common with the
+Win32 IDE for flat assembler.
+
+  Movement:
+
+    Left arrow            move one character left
+    Right arrow           move one character right
+    Up arrow              move one line up
+    Down arrow            move one line down
+    Ctrl+Left arrow       move one word left
+    Ctrl+Right arrow      move one word right
+    Home                  move to the beginning of line
+    End                   move to the end of line
+    PageUp                move one page up
+    PageDown              move one page down
+    Ctrl+Home             move to the first line of page
+    Ctrl+End              move to the last line of page
+    Ctrl+PageUp           move to the first line of text
+    Ctrl+PageDown         move to the last line of text
+
+    Each of the movement keys pressed with Shift selects text.
+
+  Editing:
+
+    Insert                switch insert/overwrite mode
+    Alt+Insert            switch horizontal/vertical blocks
+    Delete                delete current character
+    Backspace             delete previous character
+    Ctrl+Backspace        delete previous word
+    Alt+Backspace         undo previous operation (also Ctrl+Z)
+    Ctrl+Y                delete current line
+    F6                    duplicate current line
+
+  Block operations:
+
+    Ctrl+Insert           copy block into clipboard (also Ctrl+C)
+    Shift+Insert          paste block from the clipboard (also Ctrl+V)
+    Ctrl+Delete           delete block
+    Shift+Delete          cut block into clipboard (also Ctrl+X)
+    Ctrl+A                select all text
+
+  Search:
+
+    F5                    go to specified position (also Ctrl+G)
+    F7                    find (also Ctrl+F)
+    Shift+F7              find next (also F3)
+    Ctrl+F7               replace (also Ctrl+H)
+
+  Compile:
+
+    F9                    compile and run
+    Ctrl+F9               compile only
+    Shift+F9              assign current file as main file to compile
+    Ctrl+F8               compile and build symbols information
+
+  Other keys:
+
+    F2                    save current file
+    Shift+F2              save file under a new name
+    F4                    load file
+    Ctrl+N                create new file
+    Ctrl+Tab              switch to next file
+    Ctrl+Shift+Tab        switch to previous file
+    Alt+[1-9]             switch to file of given number
+    Esc                   close current file (or abort current operation)
+    Alt+X                 close all files and exit
+    Ctrl+F6               calculator
+    Alt+Left arrow        scroll left
+    Alt+Right arrow       scroll right
+    Alt+Up arrow          scroll up
+    Alt+Down arrow        scroll down
+    Alt+Delete            discard undo information (frees some memory)
+
+
+  Specific keys:
+
+    Alt+F5                show user screen
+    F10                   editor options
+    Ctrl+B                ASCII table
+
+
+4  Working with windows
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+To switch between controls in a dialog window use either arrow keys or Tab.
+With Enter you accept the information you have entered or selected, with Esc
+you abort the operation. To switch the check-box use Space key.
+  In the ASCII table window you may navigate with arrow keys or select a
+character by entering it from keyboard. With Esc you can exit the table without
+any additional operation, pressing Enter or Ctrl+B puts the selected character
+into the text.
+
+
+5  Editor options
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+In the window that shows up when you press F10 key you may turn on and off
+some of the editor options. The available options are:
+
+  Secure selection - when you turn this option on, the selected block never
+gets deleted when you start typing. When you do any text-changing operation,
+the selection is cancelled, not affecting in any way the text that was
+selected, and then the command is performed. When this option is off and you
+start typing, the current selection is discarded, also Del key simply deletes
+the selected block (when secure selection is on you have to use Ctrl+Del).
+
+  Automatic brackets - when you type any of the opening brackets, the closing
+one is automatically put just after caret.
+
+  Automatic indents - when you press Enter to start a new line, the caret is
+moved into the new line at the same position, where in the previous line the
+first non-blank character is placed. If you are breaking the line, and there
+were some non-blank characters after the caret when you pressed Enter, they
+are moved into the new line at the position of indent, any blank characters
+that were between the caret and them are ignored.
+
+  Smart tabulation - when you press Tab, it moves you to the position just
+below the next sequence of non-blank characters in the line above starting
+from the position just above where you were. If no such sequence is found in
+line above, the standard tabulation size of 8 characters is used.
+
+  Optimal fill on saving - with this option enabled, when the file is saved,
+all blank areas are filled with the optimal combination of tabs and spaces to
+get the smaller file size. If this option is off, the blank areas are saved as
+filled with spaces (but the spaces at the ends of lines are not saved).
+
+
+6  Configuration
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+The editor options are automatically stored in the configuration file (which
+has the same name as the executable file, but with the .INI extension).
+But there are some settings you can configure only by editing this file
+directly.
+  It is possible to adjust the colors used by the IDE by adding the
+appropriate settings into the configuration file (when it does not contain
+such settings, the default colors are used). The color values are the indexes
+into the 16-color palette used by the text mode of video adapter. The section 
+of configuration file containing color definitions identical to the default 
+settings would look like:
+
+  [Colors]
+  Text=7
+  Background=8
+  SelectionText=15
+  SelectionBackground=7
+  Symbols=15
+  Numbers=10
+  Strings=12
+  Comments=3
+
+  StatusText=15
+  StatusBackground=2
+
+  WindowText=15
+  WindowBackground=3
+  BoxText=15
+  BoxBackground=1
+  BoxSelectionText=15
+  BoxSelectionBackground=9
+
+  MessageText=15
+  MessageBackground=3
+  MessageSelectionText=15
+  MessageSelectionBackground=1
+
+  ErrorText=14
+  ErrorBackground=4
+  ErrorSelectionText=14
+  ErrorSelectionBackground=6
+
+  The section "Compiler" may be contain the "Memory" option, declaring the
+maximum amount of kilobytes of memory that assembler is allowed to allocate
+for compilation (by default it uses all available physical memory), and the
+"Passes" option, setting the maximum allowed number of passes over the 
+source (the default value is 100, the maximum value is 65536).
+  It is also possible to define environment variables through the configuration
+file, by putting them into the section called "Environment" - this way one 
+can define the environment variables visible only to the flat assembler, 
+instead of defining them globally in the operating system.

@@ -1,0 +1,1323 @@
+
+Menuet 64 v0.92 system calls
+
+rax       :  function number
+int 0x60  :  system call
+
+Index:
+
+  0 - Define and draw window
+  1 - Putpixel
+  2 - Get key
+  3 - Get date and time
+  4 - Display text
+  5 - Delay
+  7 - Display image
+  8 - Define and draw button
+  9 - Get process info
+ 10 - Wait for event
+ 11 - Check for event
+ 12 - Window draw state
+ 13 - Display filled rectangle
+ 15 - Define and draw background
+ 17 - Get pressed button info
+ 23 - Wait for event with timeout
+ 26 - Get general system info
+ 35 - Get pixel of screen
+ 37 - Get mouse data
+ 38 - Draw Line
+ 40 - Set bitfield for wanted events
+ 42 - Read data from IRQ
+ 44 - Define ports to read at IRQ
+ 45 - Reserve/Free IRQ for data read
+ 46 - Reserve/Free port for direct read and write
+ 47 - Display number 
+ 50 - Define freeform and transparent window
+ 51 - Threads
+ 52 - Network interface
+ 53 - Network interface
+ 58 - Filesystem
+ 60 - Inter process communication
+ 61 - Direct screen access
+ 63 - System debug info
+ 64 - Application memory resize
+ 66 - Keyboard data mode
+ 67 - Window move and resize
+105 - Delay (ms)
+110 - Get data from running process
+111 - Who am I
+112 - Get configuration parameter
+113 - Vertical and horizontal scroll bars
+114 - CD audio
+115 - PCI
+116 - Driver state access
+117 - Audio
+118 - MIDI
+119 - Draw Circle
+120 - Window Skinning
+121 - Drag'n drop
+122 - 3D API
+123 - Wait for event with timeout (ms)
+124 - Window hide, show, activate
+125 - Window transparency
+126 - Switch process to 32bit or 64bit mode
+127 - USB 2.0 device information
+128 - USB 2.0 webcam interface
+129 - USB 2.0 printer interface
+130 - USB 2.0 tuner interface
+256 - Start process
+257 - Start process from memory
+500 - System
+512 - Terminate process
+
+-
+
+  0 - Define and draw window
+
+         In : rbx - X start shl 32 & x size
+              rcx - Y start shl 32 & y size
+              rdx - Type    shl 32 & border color
+
+                    Type 0 = Draw window
+                    Type 1 = Do not draw window
+
+                    Bit 63 = 0/1 Window move enabled/disabled
+
+              rex - Draw buttons - close,full,minimize
+              rfx - 0 or pointer to window label ( asciiz )
+              rgx - 0 or pointer to menu struct
+
+         Out: -
+
+  1 - Putpixel
+
+         In : rbx - X 
+              rcx - Y 
+              rdx - Color
+
+         Out: -
+
+  2 - Get key
+
+         In : -
+
+         Out: rax - 0 Request success
+
+                  rbx - CU bits
+   
+                         U = 0 - key down
+                             1 - key up
+                         C = 0 - ascii ( utf8 )
+                             1 - extended key
+    
+                  rcx - Key, ascii ( utf8 ) or extended
+     
+               rax - 1 No key in buffer for requestor
+
+  3 - Get date and time
+
+         In : rax = 1 - Get time
+                    2 - Get date
+
+         Out: rax - Time 0x0000000000SSMMHH
+                  - Date 0x00000000DWDDMMYY
+
+  4 - Display text
+
+         In : rbx - Pointer to string ( asciiz )
+              rcx - X position
+              rdx - Y position
+              rfx - Font - 1 - Fixed size 5x9
+                           2 - Fixed size 7x9
+                           3 - rgx - Height
+                           4 - rgx - Height
+                           5 - rgx - Height
+                           6 - rgx - Height
+              rsi - Color
+
+         Out: -
+
+  5 - Delay
+
+         In : rbx - Delay 1/100s
+
+         Out: -
+
+         See also system call 105
+
+  7 - Display image
+
+         In : rbx - X start & size
+              rcx - Y start & size
+              rdx - Pointer to first pixel ( rrggbb ) to display
+              rex - Scanline difference ( 0 for continuous picture data )
+              rfx - Transparency color ( 0x1000000 for no transparency )
+              rgx - Pixel alignment ( 3 for RRggbbRRggbb )
+
+         Out: -
+
+  8 - Define and draw button
+
+         In : rbx - X start & size
+              rcx - Y start & size
+              rdx - Button ID
+              rex - Flags & Color(ignored)
+                    - bit 63 = do not draw the image
+                    - bit 62 = report button down
+              rfx - Pointer to button label ( asciiz ) or Zero
+
+         Out: -
+ 
+  9 - Get process info
+
+         In : rbx  1 - By process slot
+              rcx    - Process slot
+              rdx    - Pointer to return area
+              rex    - Bytes to return
+
+         Out: Data returned to [rdx]
+              See table 9-1
+
+         In : rbx  2 - By process PID
+              rcx    - Process PID
+              rdx    - Pointer to return area
+              rex    - Bytes to return
+
+         Out: Data returned to [rdx]
+              See table 9-1
+
+ 10 - Wait for event
+
+         In : -
+
+         Out: rax - Bitfield of event(s)
+
+                    0 .. 0 0 0 0 1 1 1
+
+                    |    | | | | | | |
+                    |    | | | | | | ----  00  Window redraw
+                    |    | | | | | ------  01  Key press
+                    |    | | | | --------  02  Button press
+                    |    | | | ----------  03  [unused] 
+                    |    | | ------------  04  Background change
+                    |    | --------------  05  Mouse event
+                    |    ----------------  06  IPC event
+                    |                      07+ [unused] 
+                    ---------------------  32+ IRQ events
+
+ 11 - Check for event
+
+         In : -
+
+         Out: rax - Bitfield of event(s)
+
+ 12 - Window draw state
+
+         In : rbx - 1 Start of draw
+              rbx - 2 End of draw
+
+         Out: -
+
+         In : rbx - 3 End of draw. Returns window draw
+                      limits, screen relative.
+
+         Out: rax - X start shl 32 + X end
+              rbx - Y start shl 32 + Y end
+
+
+ 13 - Display filled rectangle
+
+         In : rbx - X start & size
+              rcx - Y start & size
+              rdx - Color
+
+         Out: -
+
+ 15 - Define and draw background
+
+         In : rbx - 1  Draw background
+
+              rbx - 2  Give background data
+  
+                 rcx - Pointer to background image (RRGGBB)
+                 rdx - Destination
+                 rex - Amount of bytes to copy
+
+              rbx - 3  Give background size
+
+                 rcx - X size
+                 rdx - Y size
+
+         Out: -
+
+ 17 - Get pressed button info
+
+         In : -
+
+         Out:   rax - 0 Request success
+
+                   rbx - Button ID
+
+                rax - 1 No button in buffer for requestor
+
+ 23 - Wait for event with timeout
+
+         In : rbx - Delay in 1/100s
+
+         Out: rax - Bitfield of event(s)
+
+         See also system call 123
+
+ 26 - Get general system info
+
+         In : rbx 1 - General data
+                  2 - Window stack 
+                  3 - Boot info base
+                  4 - Paging table use
+
+              rcx - Pointer to return area
+              rdx - Bytes to return
+
+         Out: Returns data to [rcx]
+
+ 35 - Get pixel of screen
+
+         In : rbx - 1 screen related
+
+                rcx - X
+                rdx - Y
+
+         Out: rax - pixel
+
+ 37 - Get mouse data
+
+         In : rbx - 0 Mouse coordinates, screen relative
+
+         Out: rax - X shl 32 + Y
+ 
+         In : rbx - 1 Mouse coordinates, window relative
+
+         Out: rax - X shl 32 + Y
+
+         In : rbx - 2 Mouse buttons state
+
+         Out: rax - State
+
+         In : rbx - 3 Scroll wheel change
+
+         Out: rax - Change
+
+ 38 - Draw Line
+
+         In : rbx - X start
+              rcx - Y start
+              rdx - X end
+              rex - Y end
+              rfx - Color
+
+          Out: -
+
+ 40 - Set bitfield for wanted events
+
+         In : rbx - Bitfield of events
+
+                    Reported by default:
+
+                    0 .. 0 0 0 0 0 1 1 1
+
+                    |    | | | | | | | |
+                    |    | | | | | | | ---  00  Window redraw
+                    |    | | | | | | -----  01  Key press
+                    |    | | | | | -------  02  Button press
+                    |    | | | | ---------  03  [unused] 
+                    |    | | | -----------  04  Background change
+                    |    | | -------------  05  Mouse event
+                    |    | ---------------  06  IPC event
+                    |    -----------------  07  Network data event
+                    |                       08+ [unused] 
+                    ----------------------  32+ IRQ events
+
+         Out: -
+
+ 42 - Read data from IRQ
+
+         In : rbx - IRQ to read data from
+
+         Out: rax - 0 successful, 1 no data
+              rbx - bl data
+              rcx - Data count after read
+
+ 44 - Define ports to read at IRQ
+
+         In : rbx - IRQ
+              rcx - Pointer to port list
+
+         Out: rax - 0 successful, 1 IRQ already in use
+
+ 45 - Reserve/Free IRQ for data read
+
+         In : rbx - 0 Reserve
+
+                rcx - IRQ
+
+         Out: rax - 0 Successful, 1 IRQ already in use
+
+ 46 - Reserve/Free port for direct read and write
+
+         Not implemenet yet, but required for application
+         for future compatibility.
+
+         In : rbx - 0 Reserve
+
+                rcx - Port
+
+         Out: rax - 0 Successful, 1 Port already in use
+
+ 47 - Display number
+
+         In : rbx - bits 00-07 - 0 - rcx is number
+                               - 1 - rcx is pointer
+                    bits 08-15 - 0 - display decimal
+                               - 1 - display hexadecimal
+                               - 2 - display binary
+                    bits 16-31 - number of digits to display
+                    bits 32-63 - not used
+              rcx - Number or pointer
+              rdx - X shl 32 + Y
+              rsi - Color
+
+         Out: -
+
+ 50 - Define freeform and transparent window
+
+         In : rbx - 0 Define reference area
+
+                rcx - Pointer to freeform and transparent area
+
+                    Area size: ( window_size_x * window_size_y ) bytes
+
+                    Entries in area:
+
+                    0 - Pixel not used by application - 100% transparency
+
+                    1 - Pixel used by application     -   0% transparency
+
+                    2 - Transparent pixel             -  25/50/75% transp.
+
+                        With entry 2, colours 0xffffff and 0x000000
+                        are shown without transparency.
+
+         Out: -
+
+ 51 - Threads
+
+         In : rbx - 1 Start thread
+
+                  rcx - Thread entry
+                  rdx - Stack value
+
+         Out: rax - 0 Success
+
+                rbx - Thread PID
+
+              rax - 1 Fail
+
+ 52 - Network interface
+
+         See Stack.txt
+
+ 53 - Network interface
+
+         See Stack.txt
+
+ 58 - Filesystem
+
+         In : rbx - 0 Read
+
+                rcx - First block to read
+                rdx - Blocks to read
+                rex - Return pointer
+                rfx - Name pointer
+
+              rbx - 1 Write
+
+                rcx - Ignored
+                rdx - Bytes to save
+                rex - Pointer to data
+                rfx - Filename pointer
+
+              rbx - 2 Delete
+
+                rcx - Ignored
+                rdx - Ignored
+                rex - Ignored
+                rfx - Pointer to filename
+
+              rbx - 3 Read directory entries
+
+                rcx - First wanted name 0+
+                rdx - Set as 1
+                rex - Return pointer
+                rfx - Path pointer
+
+         Out: rax - 0 - Successful
+                    5 - Attempt to read past end
+                    6 - File not found
+              rbx - File size
+
+
+ 60 - Inter process communication
+
+         In : rbx 1 - Define ipc memory
+
+                   rcx = Pointer to memory
+                   rdx = Memory size
+
+              Out : rax 0 Successful
+
+              rbx 2 - Send message
+
+                   rcx = Receiver PID
+                   rdx = Pointer to data
+                   rex = Message size
+
+              Out: rax 0 Successful 
+                       1 Receiver not found
+                       2 No ipc memory defined at receiver
+                       3 Receiver memory locked
+                       4 Receiver memory full
+
+ 61 - Direct screen access
+
+         In : rbx - 1 Get resolution
+
+         Out: rax - X shl 32 + Y
+
+         In : rbx - 2 Get bits / pixel
+
+         Out: rax - Bits / pixel
+
+         In : rbx - 3 Get bytes / scanline
+
+         Out: rax - Bytes / scanline
+
+         In : rbx - 4 Get LFB mapped memory address
+
+         Out: rax - Mapped LFB address ( eg mov [rax],dword 0xffffff )
+
+         Direct access also with gs selector: eg mov [gs:0],dword 0xffffff
+
+ 63 - System debug info
+
+          In : rbx - 2 Read data
+
+          Out: rax - 0 Success
+
+                   rbx - Byte
+                   rcx - bytes left
+
+               rax - 1 Fail
+
+ 64 - Application memory resize
+
+          In : rbx - 1 Set new application memory size
+
+                 rcx - New amount of memory
+
+          Out: rax - 0 Success
+               rax - 1 Out of memory
+
+ 66 - Keyboard data mode
+
+          In : rbx - 1 set mode
+
+                   rcx - 0 - Keymap
+                   rcx - 1 - Scancodes ( implemented for 32 bit app )
+
+          Out: -
+
+          In : rbx - 2 get mode
+
+          Out: rax = Mode
+
+          In : rbx - 3 Shift Ctrl Alt Menu key states
+
+          Out: rax = bitmap
+
+ 67 - Window move and resize
+
+          In : rbx = new x start
+               rcx = new y start
+               rdx = new x size
+               rex = new y size
+
+          Out: rax = 0 success - 1 fail
+     
+          Specifying any parameters as -1 will leave value unchanged.
+          eg specify rbx = -1 and rcx = -1 to simply resize the
+          window, but not move it
+
+105 - Delay (ms)
+
+         In : rbx - Delay in 1/1000s
+
+         Out: -
+
+110 - Get data from running process
+
+         In : rbx - 1 Return window label
+
+                rcx - Process PID
+                rdx - Pointer to return data
+                rex - Amount of bytes to return
+
+              rbx - 2 Return icon data ( not implemented yet )
+
+         Out: Data returned to [rdx]
+
+111 - Who am I
+
+         In : rbx = 1 Return PID
+
+         Out: rax = PID
+
+         In : rbx = 2 Window active/inactive
+
+         Out: rax = 0 active - 1 inactive
+
+112 - Get configuration parameter
+
+         In : rbx - 1 Get parameter
+
+                rcx - Pointer to parameter string ( asciiz )
+                rdx - Number of characters to return
+                rex - Pointer to return area of string
+
+         Out: rax - 0 Parameter is one of numeric value
+
+                rbx - Value
+
+              rax - 1 Parameter is a string
+
+                rbx - String ( asciiz ) returned to [rex]
+
+113 - Vertical and horizontal scroll bars
+
+         In : rbx - 1 Vertical
+
+                rcx -  Value start
+                rdx -  Value size
+                rex -  Current value
+                rfx -  X start in pixels
+                rgx -  Y start in pixels
+                rhx -  Y size  in pixels
+
+         Out: -
+
+         In : rbx - 2 Horizontal
+
+                rcx -  Value start
+                rdx -  Value size
+                rex -  Current value
+                rfx -  Y start in pixels
+                rgx -  X start in pixels
+                rhx -  X size  in pixels
+
+         Out: -
+
+114 - CD audio
+
+         In : rbx - 1  Start Play
+
+                rcx -  Start Minute
+                rdx -  Start Second
+                rex -  Start Frame
+                rfx -  End Minute
+                rgx -  End Second
+                rhx -  End Frame
+
+         Out: -
+
+         In : rbx - 3  Pause Play
+
+         Out: -
+
+         In : rbx - 4  Open Tray
+
+         Out: -
+
+115 - PCI
+
+         In : rbx - 1 Read dword
+
+                rcx - Position
+
+         Out: rax - Value
+
+116 - Driver state access
+
+         In : rbx - 1 - Read Device type
+              rcx -     Slot number ( 0+ )
+              rdx -     Return pointer
+              rex -     Bytes to return
+
+         Out: rax - 0 Success - string returned to [rdx+]
+                    1 Failed
+
+         In : rbx - 2 - Read Manufacturer
+              rcx -     Slot number ( 0+ )
+              rdx -     Return pointer
+              rex -     Bytes to return
+
+         Out: rax - 0 Success - string returned to [rdx+]
+                    1 Failed
+
+         In : rbx - 3 - Read Received bytes
+              rcx -     Slot number ( 0+ )
+
+         Out: rax - 0 Success - Received bytes returned in rbx
+                    1 Failed
+
+         In : rbx - 4 - Read Sent bytes
+              rcx -     Slot number ( 0+ )
+
+         Out: rax - 0 Success - Sent bytes returned in rbx
+                    1 Failed
+
+         In : rbx - 5 - Read Driver state
+              rcx -     Slot number ( 0+ )
+
+         Out: rax - 0 Success - State returned in rbx
+                    1 Failed
+
+         In : rbx - 101 - Load Device Driver
+              rcx -       Pointer to filename
+              rdx -       State ( 0 - Disable : 1 - Enable )
+
+         Out: rax - 0 Success
+                    1 Failed
+
+117 - Audio
+
+         In : rbx - 1 Reserve audio
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+         In : rbx - 2 Give buffer data
+
+                rcx - Pointer to data  
+
+                rdx - Buffer ( 0 or 1 )
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+         In : rbx - 3 Start play
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+         In : rbx - 4 Get current play buffer
+
+         Out: rbx -   Buffer ( 0 or 1 )
+              rax - 0 Success
+                  - 1 Fail
+
+         In : rbx - 5 Stop play
+
+         Out: rax - 0 Success
+                  - 1 Fail
+                
+         In : rbx - 6 Mixer access - Available without reserving audio
+
+                rcx - 0 Set main volume - rdx - (L 0-255) shl 8 + (R 0-255)
+                rcx - 1 Set CD volume   - rdx - (L 0-255) shl 8 + (R 0-255)
+                rcx - 2 Set wave volume - rdx - (L 0-255) shl 8 + (R 0-255)
+                rcx - 3 Set mic volume  - rdx - (L 0-255) shl 8 + (R 0-255)
+
+                Out: rax - 0 Success
+                         - 1 Fail
+
+                rcx - 0x1000 Get main volume
+                rcx - 0x1001 Get CD volume  
+                rcx - 0x1002 Get wave volume
+                rcx - 0x1003 Get mic volume
+
+                Out: rbx - (L 0-255) shl 8 + (R 0-255)
+                     rax - 0 Success
+                         - 1 Fail
+
+         In : rbx - 7 Get list of supported wave out formats
+
+                rcx - Index 0+
+
+                      Index zero is reserved for 48khz, 16bit, stereo,
+                      signed little endian with 16384 byte buffer size.
+                      Drivers/applications must support atleast index zero.
+                      Use linear interpolation for internal frequences.
+
+         Out: rcx -   reserved
+              rbx -   bits 00-23 = Output frequency
+                      bits 24-31 = Bits per channel
+                      bits 32-39 = Channels
+                      bits 40-47 = 0 - non signed     - lsb,..,msb
+                                   1 - sign extended  - lsb,..,msb
+                                   2 - non signed     - msb,..,lsb
+                                   3 - sign extended  - msb,..,lsb
+                      bits 48-63 = Buffer size in bytes
+
+                      rbx = 0x400001021000BB80 for index zero
+
+                      Indexes one and above may be defined at audio card
+                      driver according to other audio card properties.
+
+              rax - 0 Success
+                  - 1 Fail ( read past last index or audio disabled )
+
+         In : rbx - 8 Set wave buffer format (fn117/2)
+
+                rcx - Index 0+
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+         In : rbx - 255 Free device
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+118 - MIDI
+
+         In : rbx - 1 Reserve midi device
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+         In : rbx - 2 Send data
+
+                 cl - Byte
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+         In : rbx - 3 Get data
+
+         Out: rax - 0 Success -> bl - byte
+                  - 1 Fail
+
+         In : rbx - 255 Free midi device
+
+         Out: rax - 0 Success
+                  - 1 Fail
+
+119 - Draw Circle
+
+         In : rbx - X start
+              rcx - Y start
+              rex - Radius
+              rsi - Color
+
+         Out: -
+
+120 - Window Skinning
+
+         In : rbx - 1 - Load skin type 1 ( 96 x 40 x 24bpp )
+              rcx -     Pointer to filename
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 2 - Disable/Enable skinning
+              rcx -     0 - Disable : 1 - Enable
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 3 - Redraw desktop windows
+
+         Out: rax - 0 Success
+                    1 Failed
+
+121 - Drag'n drop
+
+         In : rbx - 1 - Define Drag'n drop area
+
+                  rcx - Pointer to area
+                  rdx - Size of area
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 2 - Give Drag'n drop data
+
+                  rcx - Pointer to asciiz ( ';' separates filenames )
+
+         Out: rax - 0 Success
+                    1 Failed
+
+122 - 3D API
+
+         See 3D.ASM for details
+
+         In : rbx - 1 - Init
+
+                  rcx - Field address
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 2 - Set pixel in field
+
+                  rcx - Field address
+                  rdx - X
+                  r8  - Y
+                  r9  - Z
+                  r10 - Color/mirror/transparent
+                        0x01RRGGBB = Color
+                        0x020000DD = Transparent ( DD = dimming strength )
+                        0x030000DD = Mirror ( X axis, DD = dimming strength )
+                        0x040000DD = Mirror ( Y axis, DD = dimming strength )
+                        0x050000DD = Mirror ( Z axis, DD = dimming strength )
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 3 - Get pixel in field
+
+                  rcx - Field address
+                  rdx - X
+                  r8  - Y
+                  r9  - Z
+
+         Out: rax - 0 Success
+                    1 Failed
+              rbx - Color/mirror/transparent
+
+         In : rbx - 4 - Preprocess field
+
+                  rcx - Field address
+
+         Out: rax = 0 - rbx = number of pixels left
+                              of 256*256*256 to process
+
+         In : rbx - 5 - Calculate 2D image from 3D area
+
+                  rcx - Field address
+                  rdx - 0xXXDDDD, XX = camera X position, D.. = fraction
+                  r8  - 0xYYDDDD, YY = camera Y position, D.. = fraction
+                  r9  - 0xZZDDDD, ZZ = camera Z position, D.. = fraction
+                  r10 - Horizontal angle ( 0-3600 )
+                  r11 - Target 2D picture X size
+                  r12 - Target 2D picture Y size
+                  r13 - Pointer to target picture memory 
+
+         Out:  rax   - Status ( 0 Success, 1 Failed )
+              [r13+] - Target 2D picture, size r11 x r12 ( 4 byte aligned )
+
+         In : rbx - 6 - Get Sin/Cos
+
+                  rcx - 0-3600
+
+         Out: rax & rbx - Sin/Cos
+
+123 - Wait for event with timeout (ms)
+
+         In : rbx - Delay in 1/1000s
+
+         Out: rax - Bitfield of event(s)
+
+124 - Window hide, show, activate
+
+         In : rbx - 1 - Hide window
+
+                  rcx - PID
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 2 - Show window
+
+                  rcx - PID
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 3 - Activate window
+
+                  rcx - PID
+
+         Out: rax - 0 Success
+                    1 Failed
+
+125 - Window transparency
+
+         In : rbx - 1 - Get update interval
+
+         Out: rax - Update interval (ms)
+
+         In : rbx - 2 - Set update interval
+
+                  rcx - Interval (ms)
+
+         Out: rax - 0 Success
+                    1 Failed
+
+         In : rbx - 3 - Get transparency state
+
+         Out: rax - 0 - Disabled
+                    1 - Enabled for window title and frames
+                    2 - Enabled for window title, menu and frames
+
+         In : rbx - 4 - Get window pixel
+
+                  rcx - PID
+                  rdx - X
+                  r8  - Y
+
+         Out: rax - Pixel
+
+         In : rbx - 5 - Get opacity value
+
+         Out: rax - 0/1/2 = 75:25/50:50/25:75
+
+         In : rbx - 6 - Set opacity value
+
+                  rcx - 0/1/2 = 75:25/50:50/25:75
+
+         Out: rax - 0 Success
+                    1 Failed
+
+126 - Switch process to 32bit or 64bit mode
+
+         In : rbx - 1 - Switch process to 32bit mode
+
+         Out: rax - 0 - Success
+                    1 - Fail
+
+         In : rbx - 2 - Switch process to 64bit mode
+
+         Out: rax - 0 - Success
+                    1 - Fail
+
+         After system call, execution continues from
+         the following (32 or 64 bit) instruction.
+
+127 - USB 2.0 device information
+
+         In : rbx - 1 - Return USB state
+
+         Out: rax - 0  - Disabled
+                    1  - Enabled
+                    2+ - Error code
+
+         In : rbx - 2 - Information by local port
+
+                  rcx - Port
+
+         Out: rax - 0 - No device 
+                    1 - 1.x device, port disabled
+                    2 - 2.0 device
+
+         In : rbx - 3 - USB 2.0 manufacturer string
+
+                  rcx - Device address (equals port for 1-16)
+                  rdx - Data area
+                  r8  - Number of bytes to return
+
+         Out: [rdx+] - Manufacturer string (asciiz)
+
+         In : rbx - 4 - USB 2.0 device string
+
+                  rcx - Device address (equals port for 1-16)
+                  rdx - Data area
+                  r8  - Number of bytes to return
+
+         Out: [rdx+] - Device string (asciiz)
+
+         In : rbx - 5 - USB 2.0 device path
+
+                  rcx - Device address (equals port for 1-16)
+                  rdx - Data area
+                  r8  - Number of bytes to return
+
+         Out: [rdx+] - Path string (asciiz)
+
+         In : rbx - 20 - Write cache sector to /USB/1/
+
+                  rcx - Sector 0 - (80*2*18-1)
+
+         Out: rax - 0 = Success, other = fail
+
+         In : rbx - 21 - Read sector from /USB/1/
+
+                  rcx - Sector
+                  rdx - Pointer to return area (512 bytes)
+
+         Out: rax - 0 = Success, other = fail
+
+128 - USB 2.0 webcam interface
+
+         In : rbx - 1 - Return used webcam slots
+
+         Out: rbx:rax - Bitfield of used webcam device addresses
+
+         In : rbx - 2 - Get webcam configurations
+
+                  rcx - Device address (1+)
+                  rdx - Configuration (1+)
+
+         Out: rax - 0 = No device, Other = Last configuration
+
+              rbx - X shl 32 + Y shl 16 + Z
+
+                    X = 1 - YUV422   Y = bitfield of supported resolutions
+                                         0 0 0 b
+                                         I I I
+                                         I I --- 160x120
+                    Z = Packet size      I ----- 320x240
+                                         ------- 640x480
+
+         In : rbx - 3 - Set webcam configuration (reserve/free)
+
+                  rcx - Device address (1+)
+                  rdx - Configuration (1+) or zero to release device
+
+         Out: rax - 0 = Success, Other = Fail, rbx = 0
+
+         In : rbx - 4 - Turn camera on/off
+
+                  rcx - Device address (1+)
+                  rdx - On/off (1/0)
+
+         Out: rax - 0 = Success, Other = Fail
+
+         In : rbx - 5 - Get webcam picture data stream
+
+                  rcx - Device address (1+)
+                  rdx - Data return area
+                  r8  - Data size return area
+                  r9  - Amount of data (8*packet size) to read
+
+         Out: rax = 0 , rbx = 0
+              [rdx+] - Data from device at packetsize intervals
+              [r8+]  - Packet size and status at qword intervals
+                       bits 00-11 - Amount of data from device
+                       bit 12 - Transaction error, bit 13 - Babble detected
+                       bit 14 - Data buffer error, bit 15 - Active buffer
+
+129 - USB 2.0 printer interface
+
+         In : rbx - 1 - Return connected printers
+
+         Out: rbx:rax - Bitfield of connected printers
+
+         In : rbx - 2 - Get printer configuration
+
+                  rcx - Device address (1+)
+
+         Out: rax - 0xAABBCCDDEEFFGGHH
+                    
+         AA,BB,CC,DD = Margins in cm (top,left,right,bottom)
+
+         EE = 1 -  75 dpi : 2 - 150 dpi : 3 - 300 dpi : 4 - 600 dpi
+
+         FF = 1 - A4       GG = 01  - ASCII      HH = 0 USB 2.0 - No device
+              2 - B4            30  - PCL3            1 USB 2.0 - Connected
+              3 - Letter        55  - PCL5c           2 Network printer
+              4 - Legal         102 - Postscript2
+
+             rbx - 0xAAAAAAAAEEEEGGHH
+
+             AA = Network printer IP
+             EE = Network printer port
+             GG = Data sent to: 0 = USB 2.0 - 1 = Network
+             HH = Data sent in prosentages
+
+         In : rbx - 3 - Set printer configuration
+
+                  rcx - Device address (1+)
+                  rdx - 0xAABBCCDDEEFFGG00
+                  r8  - 0xIIIIIIIIJJJJKK00
+                    
+         AA,BB,CC,DD = Margins in cm (top,left,right,bottom)
+
+         FF = 1 - A4       GG = 01  - ASCII        EE = 1 - 75 dpi
+              2 - B4            30  - PCL3              2 - 150 dpi
+              3 - Letter        55  - PCL5c             3 - 300 dpi
+              4 - Legal         102 - Postscript2       4 - 600 dpi
+
+             II = Network printer IP
+             JJ = Network printer port
+             KK = Send data to: 0 = USB 2.0 - 1 = Network
+
+         Out: rax - 0 = Success, Other = Fail, rbx = 0
+
+         In : rbx - 4 - Return maximum print area in pixels
+
+                  rcx - Device address (1+)
+
+         Out: rax - 0 = Success, Other = Fail
+              rbx - Maximum print size in pixels - X shl 32 + Y
+
+         In : rbx - 5 - Send image to printer
+
+                  rcx - Device address (1+)
+                  rdx - Size : X shl 32 + Y
+                  r8  - Pointer to data (RRGGBB,..)
+
+         Out: rax - 0 = Success, Other = Fail, rbx = 0
+
+         In : rbx - 6 - Send ascii text to printer
+
+                  rcx - Device address (1+)
+                  rdx - Amount of data to send in bytes
+                  r8  - Pointer to text data
+
+         Out: rax - 0 = Success, Other = Fail, rbx = 0
+
+         In : rbx - 7 - Get data for network printer
+
+                  rcx - Device address (1+)
+                  rdx - Data return address
+                  r8  - Current printing status (4=fine, other=fail)
+
+         Out: rax - 0 = Success, rbx = data size (max 64), [rdx+] = data
+                    Other = Fail, rbx = 0
+
+130 - USB 2.0 tuner interface
+
+         In : rbx - 1 - Return used tuner slots
+
+         Out: rbx:rax - Bitfield of used printer device addresses
+
+         In : rbx - 2 - Reserve device
+
+                  rcx - Dev num (1+)
+
+         Out: rax - 0 = Success, Other = Fail, rbx = 0
+
+         Following functions require reservation and are for device 1.
+
+         In : rbx - 3 - Free device
+
+                  rcx - Dev num (1+)
+
+         Out: rax - 0 = Success, Other = Fail, rbx = 0
+
+         In : rbx - 5 - Get USB ID
+
+         Out: rax - 0 = success, rbx - 0xYYYYZZZZ Device/Manufacturer
+
+         In : rbx - 10 - Bulk out
+
+                   rsi - Pointer to data
+                   rcx - Data length
+                   rdx - Endpoint
+                   r8  - Endpoint size
+
+         Out: rax - 0 = Success, 1 = Fail, rbx = 0
+
+         In : rbx - 11 - Bulk in
+
+                   rdi - Pointer to data receive area
+                   rcx - Data length
+                   rdx - Endpoint
+                   r8  - Endpoint size
+
+         Out: rax - 0 = Success, 1 = Fail, rbx = qtd bits, [rdi+] - Data
+
+         In : rbx - 12 - Bulk in repeat
+
+                   rdi - Pointer to data receive area
+                   rcx - Data read size
+                   rdx - Endpoint
+                   r8  - Endpoint size
+                   r9  - Repeat num
+
+         Out: rax - 0 = Success, 1 = Fail, rbx = 0, [rdi+] - Data
+
+         In : rbx - 15 - Control message
+
+                   rsi - Value (word)
+                   rcx - Index (word)
+                   rdi - Direction (0=out,1=in)
+                   r9  - Tx/rx data position
+                   r8  - Tx/rx length
+                   rdx - Endpoint
+                   r10 - Packet second byte
+                   r11 - Packet first byte
+
+         Out: rax - 0 = Success, 1 = Fail, rbx = 0, [r9+] - Data
+
+         In : rbx - 20 - Clear endpoint
+
+                   rcx - Direction (0=out,1=in)
+                   rdx - 0x00 ; receiver endpoint
+                   r8  - 0x01 ; usb_req_clear_feature
+                   r9  - 0x02 ; usb recip type = endpoint
+                   r10 - 0x00 ; usb_endpoint_halt
+                   r11 - endpoint to clear
+
+         Out: rax = 0, rbx = 0
+
+256 - Start process
+
+         In : rbx = Pointer to filename
+              rcx = 0 or pointer to startup parameter ( asciiz )
+
+         Out: rax - 0 Success
+
+                   rbx - PID of started process
+
+              rax - 1 File not found
+
+257 - Start process from memory
+
+         In : rbx = Pointer to application image in memory
+              rcx = 0 or pointer to startup parameter ( asciiz )
+
+         Out: rax - 0 Success
+
+                   rbx - PID of started process
+
+              rax - 1 Invalid image
+
+500 - System
+
+         In : rbx - 1 Reboot
+
+         Out: -
+
+512 - Terminate process
+
+
+Table 9-1
+
+   00  qword   window start x
+   08  qword   window start y
+   16  qword   window size x
+   24  qword   window size y
+   72  qword   current rax
+   80  qword   current rbx
+   88  qword   current rcx
+   96  qword   current rdx
+  104  qword   current rex
+  112  qword   current rfx
+  120  qword   current rgx
+  128  qword   current rhx
+  136  qword   current rix
+  144  qword   current rjx
+  152  qword   current rkx
+  160  qword   current rlx
+  168  qword   current rsi
+  176  qword   current rdi
+  184  qword   current rbp
+  192  qword   current rsp
+  248  qword   32 for 32 bit process, 64 for 64 bit process
+  256  qword   process start at physical memory
+  264  qword   process ID
+  288  qword   process state: 0 running - 4 terminate - 5 terminated
+  296  qword   process memory usage
+  408  256 B   start path and application ( asciiz )
+ 1040  qword   0/1 = parent/child process

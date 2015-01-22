@@ -1,0 +1,186 @@
+
+DexOS 0.05 SYSTEM CALLS FOR APPLICATIONS
+
+ebx      = function number
+int 0x40 = sys call
+;=======================================================  
+;  01 = GET MENU BACKGROUND BUFFER ADDRESS 
+;       or
+;       SET NEW BUFFER ADDRESS           
+;=======================================================  
+ Input:
+       ECX = 0 
+ Output: 
+       ESI = Address of menu background buffer
+
+  OR
+
+ Input:
+       ECX = 1 
+       ESI = NEW address of buffer
+
+ Note: 
+       Read only, Do not write to this buffer.
+
+;=======================================================  
+;  02 = JPEG DECODER                                         
+;=======================================================  
+ Input:
+       esi = Compressed Image Buffer (Source buffer)
+       edi = Uncompressed Image Buffer (Dest buffer)
+       ecx = Size of file (Compressed)
+
+ Output: 
+       ReSized Image Buffer + 0 = X
+       ReSized Image Buffer + 4 = Y
+       ReSized Image Buffer + 8 = Uncompressed image (32bpp format)
+
+ error:    
+       Sets CF to 1
+ Note: 
+       Jpeg image size must be multply of 16
+
+;=======================================================  
+;  03 = DIF decoder                                        
+;=======================================================  
+ input:
+       esi = DIF file (Source buffer)
+       edi = DIF file uncompressed (Dest buffer)
+       ecx = Temp buffer, the same size as the (Dest buffer)
+
+ output:
+       dest buffer + 0 = X
+       dest buffer + 4 = Y
+       dest buffer + 8 = Uncompressed image (32bpp format 0xAARRGGBB)
+
+ error:    
+       sets CF to 1   (ax = error code, 0 = OK, 1 = not a dif file, 2 = jpeg error)
+ regs:
+       all regs saved (unless error, then ax = error code)
+
+;=======================================================  
+;  04 = DIF decoder                                        
+;======================================================= 
+ input:
+       esi = DFF file (Source buffer)
+       edi = DFF file uncompressed (Dest buffer)
+       ecx = Temp buffer, the same size as the (Dest buffer)
+
+ output:
+       dest buffer + 0 = X
+       dest buffer + 4 = Y
+       dest buffer + 8 = Uncompressed image (32bpp format 0xAARRGGBB)
+
+ error:    
+       sets CF to 1   (ax = error code, 0 = OK, 1 = not a dff file, 2 = jpeg error)
+ regs:
+       all regs saved (unless error, then ax = error code) 
+ 
+;=======================================================  
+;  05 = PUT IMAGE TO Y X                                        
+;=======================================================  
+ Input:                                           
+       edi = Dest buffer                            
+       esi = Source buffer                          
+       eax = Start X                                
+       ecx = Start Y
+
+ Source buffer:                                     
+       Buffer     = X of image size   (1 dword)     
+       Buffer + 4 = Y of image size   (1 dword)     
+       Buffer + 8 = image start (32bpp)
+             
+ Output:                                            
+       image.                                       
+
+;=======================================================  
+;  06 = PUT IMAGE TO Y X WITH ALPHA BLENDING                                       
+;=======================================================  
+ Input:                                            
+       edi = Dest buffer                           
+       esi = Source buffer                         
+       eax = Start X                                
+       ecx = Start Y   
+                             
+ Source buffer:                                     
+       Buffer     = X of image size   (1 dword)     
+       Buffer + 4 = Y of image size   (1 dword)     
+       Buffer + 8 = image start (32bpp) 
+            
+ Output:                                            
+       image.                                       
+ Notes:
+       Same as above function, but supports         
+       images with Alpha channal.                  
+
+;=======================================================  
+;  07 = PRINT TO OFF-SCREEN BUFFER                                    
+;======================================================= 
+ Input:
+      edx [x start]*65536 + [y start], the window X Y is also added
+      ecx color         - 0x00RRGGBB
+      eax font size     - small = 1 
+                        - large = 2
+      esi pointer to text beginning
+      edi zero for zero ending string or string len for none zero ending string
+
+ Output:                                                                               
+;=======================================================  
+;  08 = PRINT TO DIRECT TO SCREEN                                     
+;======================================================= 
+ Input:
+      edx [x start]*65536 + [y start], the window X Y is also added
+      ecx color         - 0x00RRGGBB
+      eax font size     - small = 1 
+                        - large = 2
+      esi pointer to text beginning
+      edi zero for zero ending string or string len for none zero ending string
+
+ Output:                                            
+
+;=======================================================  
+;  09 = PRINT TO OFF-SCREEN BUFFER PLUS BACKGROUND COLOR                                     
+;=======================================================                                           
+ Input:
+      edx [x start]*65536 + [y start], the window X Y is also added
+      ecx font color       - 0x00RRGGBB
+      edi background color - 0x00RRGGBB
+      eax font size        - small = 1 
+                           - large = 2
+      esi pointer to text beginning
+ Output: 
+
+ Notes:  
+      STRING MUST BE ZERO ENDED    
+;=======================================================  
+;  10 = PRINT TO DIRECT TO SCREEN PLUS BACKGROUND COLOR                                     
+;=======================================================     
+ Input:
+      edx [x start]*65536 + [y start], the window X Y is also added
+      ecx font color       - 0x00RRGGBB
+      edi background color - 0x00RRGGBB
+      eax font size        - small = 1 
+                           - large = 2
+      esi pointer to text beginning
+ Output: 
+
+ Notes:  
+      STRING MUST BE ZERO ENDED  
+;=======================================================  
+;  11 = DISPLAY NUMBER                                     
+;======================================================= 
+ Input:
+      eax = print type, al=0 -> ecx is number
+                        al=1 -> ecx is pointer
+                        ah=0 -> display decimal
+                        ah=1 -> display hexadecimal
+                        ah=2 -> display binary
+            bits 16-21 = number of digits to display (0-32)
+            bits 22-31 = reserved
+      ecx = number or pointer
+      edx = x shl 16 + y
+      esi = color
+      edi = background color or zero for no background color    
+ Output: ;=======================================================  
+;  12 =                                      
+;======================================================= 
