@@ -150,7 +150,7 @@ Uninitialised data is the last section and generally is so because this
 is where you will load files from disk, put strings and so forth. The
 inclusion of 'Dex.inc' is necessary. We will come to this shortly.
 
-As a side note, DexOS binaries use a flat execu   le model, so do not
+As a side note, DexOS binaries use a flat executable model, so do not
 include directives that format output binaries to MZ, PE, COFF or
 ELF executables. But the final binary must have a '.dex' or '.gex' extension for
 it be recognised as a DexOS binary.
