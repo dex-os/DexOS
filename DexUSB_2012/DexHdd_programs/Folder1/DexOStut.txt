@@ -132,7 +132,7 @@ First the header
 
 We use 32bit code for applications, therefore we instruct the assembler to
 use 32bit code. We organise the binary to load into memory at 0x1A00000 (26MB), as
-the operating system is loaded under this value. The next instruction
+the operating system is loaded below this value. The next instruction
 defines the point that the actual code section starts.
 The final element is a 4-byte string that indicates that this binary is
 in fact a DexOS binary and needs to ver 6 of the kernel32 to run on.
