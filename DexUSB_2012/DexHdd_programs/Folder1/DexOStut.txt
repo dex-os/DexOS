@@ -132,7 +132,7 @@ First the header
 
 We use 32bit code for applications, therefore we instruct the assembler to
 use 32bit code. We organise the binary to load into memory at 0x1A00000 (26MB), as
-the operating system is loaded under this value. The next instruction
+the operating system is loaded below this value. The next instruction
 defines the point that the actual code section starts.
 The final element is a 4-byte string that indicates that this binary is
 in fact a DexOS binary and needs to ver 6 of the kernel32 to run on.
@@ -150,7 +150,7 @@ Uninitialised data is the last section and generally is so because this
 is where you will load files from disk, put strings and so forth. The
 inclusion of 'Dex.inc' is necessary. We will come to this shortly.
 
-As a side note, DexOS binaries use a flat execu   le model, so do not
+As a side note, DexOS binaries use a flat executable model, so do not
 include directives that format output binaries to MZ, PE, COFF or
 ELF executables. But the final binary must have a '.dex' or '.gex' extension for
 it be recognised as a DexOS binary.
